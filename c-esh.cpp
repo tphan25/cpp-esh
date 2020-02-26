@@ -36,16 +36,59 @@ void process_command(std::string line, std::vector<struct job> &job_list)
     std::vector<std::string> vec = split(line, ' ');
     char **executed_command = vector_to_char_pointers(vec);
 
+    int pipe_channels[2];
+    if (pipe(pipe_channels) == -1)
+    {
+        std::cout << "Error creating pipe" << std::endl;
+        exit(1);
+    }
     int pid = fork();
 
     if (pid == 0)
     {
+        while ((dup2(pipe_channels[1], STDOUT_FILENO) == -1) && (errno == EINTR))
+        {
+        }
+        close(pipe_channels[1]);
+        close(pipe_channels[0]);
         execvp(executed_command[0], executed_command);
     }
     else
     {
+        char buffer[4096];
+        while (1)
+        {
+            ssize_t count = read(pipe_channels[0], buffer, sizeof(buffer));
+            std::cout << "yeet";
+            if (count == -1)
+            {
+
+                if (errno == EINTR)
+                {
+                    continue;
+                }
+                else
+                {
+                    perror("read");
+                    exit(1);
+                }
+            }
+            else if (count == 0)
+            {
+                break;
+            }
+            else
+            {
+                // //handle_child_process_output(buffer, count);
+                // fprintf(std::cout, "Buffered, will be flushed");
+                // fflush(fd); //Prints to a file
+                std::cout << buffer;
+            }
+        }
+        close(pipe_channels[0]);
         int status;
-        waitpid(-1, &status, 0);
+        wait(NULL);
+        std::cout << "Status of child is " << status << std::endl;
     }
     free(executed_command);
 }
