@@ -38,9 +38,13 @@ void process_command(std::string line, std::vector<struct job> &job_list)
 
     int pid = fork();
 
-    if (pid == 0)
+    if (pid < 0) {
+        std::cout << "error forking" << std::endl;
+    } else if (pid == 0)
     {
-        execvp(executed_command[0], executed_command);
+        int exec = execvp(executed_command[0], executed_command);
+        std::cout << "exec code " << exec << std::endl;
+        exit(-1);
     }
     else
     {
@@ -52,13 +56,16 @@ void process_command(std::string line, std::vector<struct job> &job_list)
 
 char **vector_to_char_pointers(const std::vector<std::string> line)
 {
-    char **ret = (char **)malloc(sizeof(char *) * line.size());
+    char **ret = (char **)malloc(sizeof(char *) * line.size() + 1);
     for (uint32_t i = 0; i < line.size(); i++)
     {
-        char *curr = (char *)malloc(sizeof(char) * line[i].length());
+        int length = line[i].length();
+        char *curr = (char *)malloc(sizeof(char) * length + 1);
         strcpy(curr, &line[i][0]);
+        curr[length] = '\0';
         *(ret + i) = curr;
     }
+    ret[line.size()] = NULL;
     return ret;
 }
 
