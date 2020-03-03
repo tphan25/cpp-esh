@@ -1,11 +1,12 @@
 #include <vector>
 
-#include "c-esh_datastructures.h"
+#include "c-esh_datastructures.hpp"
 
 // https://www.gnu.org/software/libc/manual/html_node/Implementing-a-Shell.html#Implementing-a-Shell
-
-/* Find the active job with the indicated pgid.  */
-job *find_job(pid_t pgid, std::vector<job> vec)
+namespace DataStructures
+{
+/* Find the active Job with the indicated pgid.  */
+Job *find_job(pid_t pgid, std::vector<Job> vec)
 {
     for (auto j = 0; j < vec.size(); j++)
     {
@@ -17,10 +18,10 @@ job *find_job(pid_t pgid, std::vector<job> vec)
     return NULL;
 }
 
-/* Return true if all processes in the job have stopped or completed.  */
-int job_is_stopped(job *j)
+/* Return true if all processes in the Job have stopped or completed.  */
+int job_is_stopped(Job *j)
 {
-    process *p;
+    Process *p;
 
     for (p = j->first_process; p; p = p->next)
         if (!p->completed && !p->stopped)
@@ -28,13 +29,14 @@ int job_is_stopped(job *j)
     return 1;
 }
 
-/* Return true if all processes in the job have completed.  */
-int job_is_completed(job *j)
+/* Return true if all processes in the Job have completed.  */
+int job_is_completed(Job *j)
 {
-    process *p;
+    Process *p;
 
     for (p = j->first_process; p; p = p->next)
         if (!p->completed)
             return 0;
     return 1;
 }
+} // namespace DataStructures
