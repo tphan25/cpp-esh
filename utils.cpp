@@ -1,8 +1,9 @@
 #include <sstream>
 #include <stdio.h>
+#include <iostream>
 #include <string.h>
-#include "utils.hpp"
 #include "c-esh_datastructures.hpp"
+#include "utils.hpp"
 
 namespace Utils
 {
@@ -30,7 +31,7 @@ std::vector<std::string> split(const std::string &s, char delim)
 }
 
 template <typename Out>
-void split(const std::string &s, char delim, Out result)
+void split(const std::string &s, const char delim, Out result)
 {
     std::istringstream iss(s);
     std::string item;
@@ -42,4 +43,28 @@ void split(const std::string &s, char delim, Out result)
         }
     }
 }
+
+//TODO
+//Split line i.e. cat foo.txt | grep 'hello'
+//Iterate through, appending to a process until | is met, then trim
+DataStructures::Job get_job_from_line(const std::vector<std::string> line)
+{
+    DataStructures::Job job;
+    std::vector<DataStructures::Process> proc_list;
+    DataStructures::Process *curr_process = new DataStructures::Process();
+    std::vector<std::string>::const_iterator iter;
+    std::ostringstream str_builder;
+
+    for (iter = line.begin(); iter < line.end(); iter++)
+    {
+        if (*iter != "|")
+        {
+            str_builder << *iter;
+            str_builder << " ";
+        }
+    }
+    std::cout << str_builder.str();
+    return job;
+}
+
 } // namespace Utils
