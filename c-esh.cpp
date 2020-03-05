@@ -39,7 +39,7 @@ void process_command(std::string line)
 {
     std::vector<std::string> vec = Utils::split(line, ' ');
     char **executed_command = Utils::vector_to_char_pointers(vec);
-    Utils::get_job_from_line(vec);
+    Utils::get_job_from_line(line);
 
     //cd is not built in
     if (!strcmp(executed_command[0], "cd"))

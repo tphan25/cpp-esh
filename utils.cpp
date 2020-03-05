@@ -23,6 +23,7 @@ char **vector_to_char_pointers(const std::vector<std::string> line)
 }
 
 // Returns a new vector split
+// https://stackoverflow.com/questions/236129/how-do-i-iterate-over-the-words-of-a-string
 std::vector<std::string> split(const std::string &s, char delim)
 {
     std::vector<std::string> elems;
@@ -47,23 +48,24 @@ void split(const std::string &s, const char delim, Out result)
 //TODO
 //Split line i.e. cat foo.txt | grep 'hello'
 //Iterate through, appending to a process until | is met, then trim
-DataStructures::Job get_job_from_line(const std::vector<std::string> line)
+DataStructures::Job get_job_from_line(std::string line)
 {
     DataStructures::Job job;
     std::vector<DataStructures::Process> proc_list;
     DataStructures::Process *curr_process = new DataStructures::Process();
     std::vector<std::string>::const_iterator iter;
-    std::ostringstream str_builder;
 
-    for (iter = line.begin(); iter < line.end(); iter++)
+    std::string curr_proc_string;
+    std::istringstream pipe_separator(line);
+    while (std::getline(pipe_separator, curr_proc_string, '|'))
     {
-        if (*iter != "|")
-        {
-            str_builder << *iter;
-            str_builder << " ";
-        }
+        std::vector<std::string> vec = split(curr_proc_string, ' ');
+        int token_count = vec.size();
+        char **argv = vector_to_char_pointers(vec);
+        curr_process->argv = argv;
+        proc_list.push_back(*curr_process);
+        curr_process = new DataStructures::Process();
     }
-    std::cout << str_builder.str();
     return job;
 }
 
