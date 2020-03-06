@@ -78,6 +78,14 @@ void process_command(std::string line)
 
 void signal_handler(int signum) {
     std::cout << "The signal called is " << signum << "." << std::endl;
-    exit(signum);
+    pid_t pid = getpid();
+    pid_t pgid = getpgid(pid);
+    if (pgid == -1) {
+        std::cout << "The errno is " << errno << "." << std::endl;
+    }
+    std::cout << "You should return control to " << pgid << std::endl;
+    tcsetpgrp(STDIN_FILENO, pgid);
+    if (!signum == SIGTSTP)
+        exit(signum);
 }
 } // namespace Main
