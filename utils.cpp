@@ -2,6 +2,10 @@
 #include <stdio.h>
 #include <iostream>
 #include <string.h>
+#include <algorithm> 
+#include <functional> 
+#include <cctype>
+#include <locale>
 #include "c-esh_datastructures.hpp"
 #include "utils.hpp"
 
@@ -66,7 +70,35 @@ DataStructures::Job get_job_from_line(std::string line)
         proc_list.push_back(*curr_process);
         curr_process = new DataStructures::Process();
     }
+    char* command = (char*) malloc(sizeof(char) * line.size() + 1);
+    strcpy(command, &line[0]);
+    *(command + line.size()) = '\0';
+
+    job.processes = proc_list;
+    job.command = command;
+
     return job;
+}
+
+
+// trim from start (in place)
+static inline void ltrim(std::string &s) {
+    s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](int ch) {
+        return !std::isspace(ch);
+    }));
+}
+
+// trim from end (in place)
+static inline void rtrim(std::string &s) {
+    s.erase(std::find_if(s.rbegin(), s.rend(), [](int ch) {
+        return !std::isspace(ch);
+    }).base(), s.end());
+}
+
+// trim from both ends (in place)
+void trim(std::string &s) {
+    ltrim(s);
+    rtrim(s);
 }
 
 } // namespace Utils

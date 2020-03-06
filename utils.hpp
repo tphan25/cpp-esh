@@ -11,4 +11,5 @@ void split(const std::string &s, const char delim, Out result);
 
 DataStructures::Job get_job_from_line(const std::string line);
 char **string_to_char_arr(const std::string str);
+void trim(std::string &s);
 } // namespace Utils

@@ -37,10 +37,11 @@ namespace Main
 // TODO: work with job_list
 void process_command(std::string line)
 {
+    Utils::trim(line);
     std::vector<std::string> vec = Utils::split(line, ' ');
-    char **executed_command = Utils::vector_to_char_pointers(vec);
-    Utils::get_job_from_line(line);
-
+    DataStructures::Job job = Utils::get_job_from_line(line);
+    // Gets the first process in the pipeline (multipiping soooon)
+    char **executed_command = job.processes[0].argv;
     //cd is not built in
     if (!strcmp(executed_command[0], "cd"))
     {
