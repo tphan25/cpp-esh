@@ -17,7 +17,10 @@ std::vector<DataStructures::Job> global_job_list;
 
 int main()
 {
-    std::cout << "Hello, World!" << std::endl;
+    // TODO: write handlers
+    signal(SIGABRT, Main::signal_handler);
+    signal(SIGTSTP, Main::signal_handler);
+    // signal(SIGCHLD, Main::signal_handler); Ends parent ATM
     std::string line;
 
     while (1)
@@ -71,5 +74,10 @@ void process_command(std::string line)
         waitpid(-1, &status, 0);
     }
     free(executed_command);
+}
+
+void signal_handler(int signum) {
+    std::cout << "The signal called is " << signum << "." << std::endl;
+    exit(signum);
 }
 } // namespace Main
