@@ -76,6 +76,7 @@ DataStructures::Job get_job_from_line(std::string line)
 
     job.processes = proc_list;
     job.command = command;
+    job.pgid = 0;
 
     return job;
 }
