@@ -58,7 +58,6 @@ namespace Main
 void process_command(std::string line)
 {
     Utils::trim(line);
-    std::vector<std::string> vec = Utils::split(line, ' ');
     DataStructures::Job job = Utils::get_job_from_line(line);
     // Gets the first process in the pipeline (multipiping soooon)
     char **executed_command = job.processes[0].argv;
@@ -153,5 +152,22 @@ launch_process (DataStructures::Process *p, pid_t pgid,
     execvp (p->argv[0], p->argv);
     perror ("execvp");
     exit (1);
+}
+void launch_job(DataStructures::Job *job) {
+    DataStructures::Process* proc;
+    int std_in, fd[2];
+    int job_list_length = job->processes.size();
+
+    for (int i = 0; i < (*job).processes.size(); i++) {
+        if (i < job_list_length - 1) {
+            pipe(fd);
+            launch_process(&job->processes[i], 0, std_in, fd[1], STDERR_FILENO, 1);
+            close(fd[1]);
+            std_in = fd[0];
+        } else {
+            int std_out = 1;
+            launch_process(&job->processes[i], 0, std_in, std_out, STDERR_FILENO, 1);
+        }
+    }
 }
 } // namespace Main

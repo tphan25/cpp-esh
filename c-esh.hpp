@@ -9,4 +9,6 @@ void
 launch_process (DataStructures::Process *p, pid_t pgid,
                 int infile, int outfile, int errfile,
                 int foreground);
+void launch_job(DataStructures::Job *job);
+
 }
