@@ -20,18 +20,21 @@ int shell_terminal;
 
 int main()
 {
+    // https://www.tutorialspoint.com/unix/unix-signals-traps.htm
+    // https://www.gnu.org/software/libc/manual/html_node/Job-Control-Signals.html
+    // For the shell itself, ignore  SIGINT, SIGTSTP
+    // Ignore if a process in background accesses terminal?
     signal (SIGINT, SIG_IGN);
-    signal (SIGQUIT, SIG_IGN);
     signal (SIGTSTP, SIG_IGN);
-    signal (SIGTTIN, SIG_IGN);
-    signal (SIGTTOU, SIG_IGN);
+    // signal (SIGTTIN, SIG_IGN);
+    // signal (SIGTTOU, SIG_IGN);
 
     shell_pgid = getpid();
     if (setpgid(shell_pgid, shell_pgid) < 0){
         perror("Failed to put shell in own process group");
         exit(1);
     }
-        
+    shell_terminal = STDOUT_FILENO;
     tcsetpgrp(shell_terminal, shell_pgid);
     tcgetattr(shell_terminal, &shell_tmodes);
 
@@ -70,6 +73,8 @@ void process_command(std::string line)
         return;
     }
 
+
+
     int pid = fork();
     if (pid < 0)
     {
@@ -77,55 +82,49 @@ void process_command(std::string line)
     }
     else if (pid == 0)
     {
-        launch_process(&job.processes[0], job.pgid, STDIN_FILENO, STDOUT_FILENO, STDERR_FILENO, 1);
+        //launch_process(&job.processes[0], job, STDIN_FILENO, STDOUT_FILENO, STDERR_FILENO, 1);
+        launch_job(job);
     }
     else
     {
         // If job PGID is there, put the child in that group
         // Else, make the process group
         if (job.pgid == 0) {
-            setpgid(pid, job.pgid);
-        } else {
             job.pgid = pid;
             setpgid(pid, job.pgid);
         }
 
-        // Give terminal to job pgrp if it's foreground
         int status;
-        signal(SIGTTOU, SIG_IGN);
-        tcsetpgrp(shell_terminal, job.pgid);
-        signal(SIGTTOU, SIG_DFL);
         int waitCode;
         if ((waitCode = waitpid(-1, &status, WUNTRACED)) < 0) {
             std::cout << errno << std::endl;
         }
+        // Give terminal back to the shell (ignore SIGTTOU in case)
         signal(SIGTTOU, SIG_IGN);
-        // Give terminal back to this parent
-        tcsetpgrp(0, getpid());
+        tcsetpgrp(shell_terminal, getpid());
         signal(SIGTTOU, SIG_DFL);
     }
     free(executed_command);
 }
 
 void
-launch_process (DataStructures::Process *p, pid_t pgid,
+launch_process (DataStructures::Process *p, DataStructures::Job &job,
                 int infile, int outfile, int errfile,
                 int foreground)
 {
     pid_t pid;
 
     pid = getpid ();
-    if (pgid == 0) {
-        pgid = pid;
-        setpgid (pid, pgid);
+    if (job.pgid == 0) {
+        job.pgid = pid;
+        setpgid (pid, job.pgid);
     }
     // give terminal foreground
     signal(SIGTTOU, SIG_IGN);
-    tcsetpgrp (shell_terminal, pgid);
+    tcsetpgrp (shell_terminal, job.pgid);
 
-    /* Set the handling for job control signals back to the default.  */
+    // Restore signal handling to work properly in child process.
     signal (SIGINT, SIG_DFL);
-    signal (SIGQUIT, SIG_DFL);
     signal (SIGTSTP, SIG_DFL);
     signal (SIGTTIN, SIG_DFL);
     signal (SIGTTOU, SIG_DFL);
@@ -153,20 +152,23 @@ launch_process (DataStructures::Process *p, pid_t pgid,
     perror ("execvp");
     exit (1);
 }
-void launch_job(DataStructures::Job *job) {
+
+void launch_job(DataStructures::Job &job) {
     DataStructures::Process* proc;
     int std_in, fd[2];
-    int job_list_length = job->processes.size();
+    int job_list_length = job.processes.size();
 
-    for (int i = 0; i < (*job).processes.size(); i++) {
+    for (int i = 0; i < job.processes.size(); i++) {
         if (i < job_list_length - 1) {
+            // If not at end of process chain, set up pipes
             pipe(fd);
-            launch_process(&job->processes[i], 0, std_in, fd[1], STDERR_FILENO, 1);
+            launch_process(&job.processes[i], job, std_in, fd[1], STDERR_FILENO, 1);
             close(fd[1]);
             std_in = fd[0];
         } else {
-            int std_out = 1;
-            launch_process(&job->processes[i], 0, std_in, std_out, STDERR_FILENO, 1);
+            int std_out = STDOUT_FILENO;
+            launch_process(&job.processes[i], job, std_in, std_out, STDERR_FILENO, 1);
+            close(std_in);
         }
     }
 }
